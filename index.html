@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartStudy AI — App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ─────────────────────────────────────────────────── */
+:root{
+  --ink:#1B2340; --ink-soft:#3A436A; --ink-ghost:#7B85AA;
+  --paper:#FAF7EF; --paper-2:#F2EDE0; --card:#FFFFFF;
+  --lime:#D7EA4C; --lime-dark:#8FA324; --lime-bg:#F5FBDE;
+  --pink:#FF6FA6; --pink-dark:#B23F6C; --pink-bg:#FFF0F5;
+  --blue:#4C6FFF; --blue-bg:#EEF2FF;
+  --green:#22C55E; --red:#EF4444; --orange:#F97316;
+  --line:rgba(27,35,64,0.10);
+  --radius:16px; --radius-sm:10px;
+  --shadow:0 8px 30px rgba(27,35,64,0.09);
+  --shadow-lg:0 20px 60px rgba(27,35,64,0.16);
+  --sidebar:240px;
+  --topbar:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.font-display{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.01em;}
+a{color:inherit;text-decoration:none;}
+
+/* ── UTILS ─────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:999px;font-weight:600;font-size:14px;
+  cursor:pointer;border:2px solid var(--ink);transition:all .15s ease;
+  font-family:'Inter',sans-serif;white-space:nowrap;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn-primary{background:var(--ink);color:var(--paper);}
+.btn-primary:hover{box-shadow:0 6px 0 0 var(--lime-dark);}
+.btn-lime{background:var(--lime);color:var(--ink);border-color:var(--lime);}
+.btn-lime:hover{box-shadow:0 6px 0 0 var(--lime-dark);}
+.btn-ghost{background:transparent;color:var(--ink);}
+.btn-ghost:hover{background:var(--paper-2);}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red);}
+.btn-sm{padding:7px 16px;font-size:13px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;
+}
+.badge-lime{background:var(--lime);color:var(--ink);}
+.badge-pink{background:var(--pink-bg);color:var(--pink-dark);}
+.badge-blue{background:var(--blue-bg);color:var(--blue);}
+.badge-green{background:#DCFCE7;color:#166534;}
+.badge-red{background:#FEE2E2;color:#991B1B;}
+
+.card{
+  background:var(--card);border-radius:var(--radius);
+  border:1px solid var(--line);padding:24px;
+}
+.card-raised{box-shadow:var(--shadow);}
+
+/* ── TOAST ──────────────────────────────────────────────────── */
+#toast-container{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:flex;flex-direction:column;gap:10px;
+}
+.toast{
+  padding:14px 20px;border-radius:12px;font-size:14px;font-weight:600;
+  border:1.5px solid;box-shadow:var(--shadow);
+  animation:slideIn .3s ease;max-width:340px;
+}
+.toast-success{background:#F0FDF4;border-color:#86EFAC;color:#166534;}
+.toast-error{background:#FEF2F2;border-color:#FCA5A5;color:#991B1B;}
+.toast-info{background:var(--blue-bg);border-color:#A5B4FC;color:#3730A3;}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+
+/* ── MODAL ──────────────────────────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(27,35,64,0.55);
+  backdrop-filter:blur(4px);z-index:500;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--card);border-radius:20px;
+  width:100%;max-width:440px;padding:36px;
+  box-shadow:var(--shadow-lg);transform:translateY(16px);
+  transition:transform .25s ease;position:relative;
+}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  background:none;border:none;cursor:pointer;
+  font-size:20px;color:var(--ink-ghost);transition:color .15s;
+}
+.modal-close:hover{color:var(--ink);}
+.modal h2{font-size:22px;margin-bottom:6px;}
+.modal p.sub{font-size:14px;color:var(--ink-soft);margin-bottom:26px;}
+
+/* Auth tabs */
+.auth-tabs{display:flex;gap:0;border:1.5px solid var(--ink);border-radius:999px;padding:3px;margin-bottom:26px;}
+.auth-tab{flex:1;text-align:center;padding:9px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer;border:none;background:transparent;font-family:'Inter',sans-serif;color:var(--ink-soft);transition:all .2s;}
+.auth-tab.active{background:var(--ink);color:var(--paper);}
+
+/* Form */
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink-soft);}
+.form-group input,.form-group select{
+  width:100%;padding:11px 14px;border-radius:10px;
+  border:1.5px solid var(--line);font-family:'Inter',sans-serif;
+  font-size:14px;background:var(--paper);color:var(--ink);
+  transition:border-color .15s;
+}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);}
+
+/* ── APP SHELL ─────────────────────────────────────────────── */
+#app-shell{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:var(--paper);flex-direction:column;
+}
+#app-shell.visible{display:flex;}
+
+/* TOP BAR */
+.app-topbar{
+  height:var(--topbar);background:var(--card);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;gap:16px;flex-shrink:0;
+}
+.topbar-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;font-family:'Space Grotesk',sans-serif;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center;}
+.logo-mark span{width:12px;height:12px;background:var(--lime);border-radius:3px;transform:rotate(-8deg);}
+.topbar-user{display:flex;align-items:center;gap:12px;font-size:14px;}
+.user-avatar{
+  width:34px;height:34px;border-radius:50%;background:var(--ink);
+  color:var(--paper);display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;font-family:'Space Grotesk',sans-serif;
+}
+.topbar-mode-badge{font-size:12px;background:var(--lime-bg);color:var(--lime-dark);border:1px solid var(--lime);padding:3px 10px;border-radius:999px;font-weight:700;}
+
+/* BODY */
+.app-body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.app-sidebar{
+  width:var(--sidebar);background:var(--card);
+  border-right:1px solid var(--line);
+  display:flex;flex-direction:column;
+  padding:20px 0;flex-shrink:0;overflow-y:auto;
+}
+.nav-section{padding:0 12px;margin-bottom:6px;}
+.nav-label{font-size:11px;font-weight:700;color:var(--ink-ghost);text-transform:uppercase;letter-spacing:.08em;padding:0 8px;margin-bottom:6px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;font-size:14px;
+  font-weight:500;cursor:pointer;color:var(--ink-soft);
+  transition:all .15s;border:none;background:none;width:100%;text-align:left;
+  font-family:'Inter',sans-serif;
+}
+.nav-item:hover{background:var(--paper);color:var(--ink);}
+.nav-item.active{background:var(--ink);color:var(--paper);}
+.nav-item .nav-icon{font-size:16px;width:22px;text-align:center;}
+.nav-streak{margin-top:auto;padding:16px;border-top:1px solid var(--line);}
+.streak-card{background:var(--ink);color:var(--paper);border-radius:12px;padding:14px;text-align:center;}
+.streak-num{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--lime);}
+.streak-label{font-size:12px;opacity:.7;margin-top:2px;}
+
+/* MAIN CONTENT */
+.app-main{flex:1;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:0;}
+.view{display:none;flex-direction:column;gap:24px;animation:fadeInUp .25s ease;}
+.view.active{display:flex;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.view-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.view-header h2{font-size:22px;}
+.view-header p{font-size:14px;color:var(--ink-soft);margin-top:4px;}
+
+/* ── DASHBOARD VIEW ─────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.stat-card{
+  background:var(--card);border-radius:var(--radius);border:1px solid var(--line);
+  padding:20px;display:flex;flex-direction:column;gap:6px;
+}
+.stat-icon{font-size:22px;margin-bottom:4px;}
+.stat-value{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;}
+.stat-label{font-size:13px;color:var(--ink-soft);}
+
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.bar-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+.bar-row:last-child{border-bottom:none;}
+.bar-label{font-size:13px;width:110px;color:var(--ink-soft);flex-shrink:0;}
+.bar-track{flex:1;height:9px;background:var(--paper-2);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:var(--blue);transition:width .6s ease;}
+.bar-fill.weak{background:var(--pink);}
+.bar-pct{font-size:12px;font-weight:700;width:36px;text-align:right;color:var(--ink-soft);}
+
+.weak-topic-list{display:flex;flex-direction:column;gap:10px;}
+.weak-topic-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:var(--pink-bg);
+  border-radius:10px;border:1px solid #FFD6E5;
+}
+.weak-topic-name{font-size:14px;font-weight:600;}
+.weak-topic-score{font-size:13px;color:var(--pink-dark);font-weight:700;}
+
+/* ── DOCUMENTS VIEW ─────────────────────────────────────────── */
+.upload-zone{
+  border:2px dashed var(--line);border-radius:var(--radius);
+  padding:48px 24px;text-align:center;cursor:pointer;
+  transition:all .2s;background:var(--paper);
+}
+.upload-zone:hover,.upload-zone.dragging{border-color:var(--blue);background:var(--blue-bg);}
+.upload-icon{font-size:40px;margin-bottom:12px;}
+.upload-zone h3{font-size:17px;margin-bottom:6px;}
+.upload-zone p{font-size:14px;color:var(--ink-soft);}
+.upload-zone input[type=file]{display:none;}
+
+.doc-list{display:flex;flex-direction:column;gap:12px;}
+.doc-item{
+  background:var(--card);border:1.5px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;display:flex;align-items:center;gap:16px;
+  transition:box-shadow .15s;cursor:pointer;
+}
+.doc-item:hover{box-shadow:var(--shadow);}
+.doc-icon{font-size:28px;flex-shrink:0;}
+.doc-info{flex:1;min-width:0;}
+.doc-title{font-size:15px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.doc-meta{font-size:12px;color:var(--ink-soft);}
+.doc-actions{display:flex;gap:8px;flex-shrink:0;}
+
+.summary-panel{
+  background:var(--lime-bg);border:1.5px solid var(--lime);
+  border-radius:var(--radius);padding:20px;margin-top:8px;
+}
+.summary-panel h4{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--lime-dark);}
+.summary-panel p{font-size:14px;color:var(--ink);white-space:pre-line;line-height:1.7;}
+
+/* ── FLASHCARD VIEW ─────────────────────────────────────────── */
+.fc-controls{display:flex;align-items:center;gap:12px;}
+.fc-doc-select{
+  padding:9px 14px;border-radius:10px;border:1.5px solid var(--line);
+  font-family:'Inter',sans-serif;font-size:14px;background:var(--paper);color:var(--ink);
+  flex:1;max-width:280px;
+}
+.fc-stage{
+  display:flex;flex-direction:column;align-items:center;
+  gap:28px;padding:20px 0;
+}
+.fc-progress-bar{
+  width:100%;max-width:520px;height:6px;
+  background:var(--paper-2);border-radius:6px;overflow:hidden;
+}
+.fc-progress-fill{height:100%;background:var(--blue);border-radius:6px;transition:width .4s ease;}
+.fc-counter{font-size:13px;color:var(--ink-soft);font-weight:600;}
+
+.flashcard-3d{
+  width:520px;max-width:100%;height:280px;
+  perspective:1200px;cursor:pointer;
+}
+.flashcard-3d-inner{
+  position:relative;width:100%;height:100%;
+  transition:transform .6s cubic-bezier(.2,.8,.2,1);
+  transform-style:preserve-3d;
+}
+.flashcard-3d.flipped .flashcard-3d-inner{transform:rotateY(180deg);}
+.fc-face{
+  position:absolute;inset:0;border-radius:20px;
+  border:2px solid var(--ink);padding:32px;
+  backface-visibility:hidden;display:flex;flex-direction:column;
+  justify-content:space-between;box-shadow:8px 8px 0 var(--ink);
+}
+.fc-face-front{background:var(--card);}
+.fc-face-back{background:var(--lime);transform:rotateY(180deg);}
+.fc-face .fc-tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);}
+.fc-face .fc-q{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;line-height:1.35;}
+.fc-face .fc-hint{font-size:13px;color:var(--ink-soft);}
+.fc-tap-hint{font-size:13px;color:var(--ink-ghost);text-align:center;}
+
+.rating-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.rating-btn{
+  padding:10px 20px;border-radius:999px;border:2px solid var(--ink);
+  font-weight:700;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;
+  transition:all .15s;
+}
+.rating-btn:hover{transform:translateY(-2px);}
+.r0{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5;}
+.r3{background:#FEF3C7;color:#92400E;border-color:#FDE68A;}
+.r4{background:#DBEAFE;color:#1E40AF;border-color:#93C5FD;}
+.r5{background:var(--lime);color:var(--ink);border-color:var(--lime-dark);}
+
+.fc-done{text-align:center;padding:48px 24px;}
+.fc-done .done-icon{font-size:56px;margin-bottom:16px;}
+.fc-done h3{font-size:22px;margin-bottom:8px;}
+.fc-done p{font-size:15px;color:var(--ink-soft);}
+
+.fc-empty{text-align:center;padding:60px 24px;}
+.fc-empty .empty-icon{font-size:48px;margin-bottom:14px;}
+.fc-empty h3{font-size:18px;margin-bottom:8px;}
+.fc-empty p{font-size:14px;color:var(--ink-soft);}
+
+/* ── QUIZ VIEW ─────────────────────────────────────────────── */
+.quiz-setup{display:flex;flex-direction:column;gap:20px;}
+.quiz-taking{display:flex;flex-direction:column;gap:20px;}
+.quiz-result{display:flex;flex-direction:column;gap:20px;}
+
+.q-progress{
+  display:flex;align-items:center;gap:14px;
+}
+.q-progress .fc-progress-bar{flex:1;}
+
+.question-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--line);padding:28px;}
+.question-num{font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.question-text{font-size:17px;font-weight:600;font-family:'Space Grotesk',sans-serif;margin-bottom:22px;line-height:1.4;}
+.options-list{display:flex;flex-direction:column;gap:10px;}
+.option-btn{
+  padding:13px 16px;border-radius:10px;border:1.5px solid var(--line);
+  background:var(--paper);text-align:left;cursor:pointer;font-size:14px;
+  font-family:'Inter',sans-serif;color:var(--ink);transition:all .15s;width:100%;
+  font-weight:500;
+}
+.option-btn:hover{border-color:var(--blue);background:var(--blue-bg);}
+.option-btn.selected{border-color:var(--blue);background:var(--blue-bg);font-weight:700;}
+.option-btn.correct{border-color:var(--green);background:#DCFCE7;font-weight:700;}
+.option-btn.wrong{border-color:var(--red);background:#FEE2E2;font-weight:700;}
+
+.fill-input{
+  width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid var(--line);
+  font-family:'Inter',sans-serif;font-size:15px;background:var(--paper);
+}
+.fill-input:focus{outline:none;border-color:var(--blue);}
+
+.result-header{text-align:center;padding:32px 20px;}
+.result-score{
+  font-family:'Space Grotesk',sans-serif;font-size:72px;font-weight:700;
+  line-height:1;margin-bottom:8px;
+}
+.result-score.pass{color:var(--green);}
+.result-score.fail{color:var(--red);}
+.result-score.mid{color:var(--orange);}
+.result-label{font-size:18px;color:var(--ink-soft);}
+
+.topic-scores{display:flex;flex-direction:column;gap:8px;}
+.review-list{display:flex;flex-direction:column;gap:16px;}
+.review-item{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--line);padding:20px;}
+.review-item .ri-q{font-size:14px;font-weight:600;font-family:'Space Grotesk',sans-serif;margin-bottom:10px;}
+.review-item .ri-your{font-size:13px;margin-bottom:4px;}
+.review-item .ri-correct{font-size:13px;font-weight:700;color:var(--green);}
+.review-item .ri-explain{font-size:13px;color:var(--ink-soft);margin-top:8px;border-top:1px solid var(--line);padding-top:8px;}
+
+/* ── AI TUTOR VIEW ─────────────────────────────────────────── */
+.chat-layout{
+  display:flex;gap:20px;
+  height:calc(100vh - var(--topbar) - 140px);
+  min-height:400px;
+}
+.chat-doc-panel{width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;}
+.chat-doc-item{
+  padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);
+  font-size:13px;font-weight:600;cursor:pointer;background:var(--paper);
+  transition:all .15s;
+}
+.chat-doc-item:hover{border-color:var(--blue);}
+.chat-doc-item.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.chat-doc-label{font-size:11px;font-weight:700;color:var(--ink-ghost);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+
+.chat-main{flex:1;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.chat-msg{max-width:78%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.6;}
+.chat-msg.user{align-self:flex-end;background:var(--ink);color:var(--paper);border-radius:14px 14px 4px 14px;}
+.chat-msg.model{align-self:flex-start;background:var(--paper-2);border-radius:14px 14px 14px 4px;}
+.chat-msg .msg-role{font-size:11px;font-weight:700;opacity:.6;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+.chat-input-row{display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--line);}
+.chat-input{
+  flex:1;padding:11px 16px;border-radius:10px;border:1.5px solid var(--line);
+  font-family:'Inter',sans-serif;font-size:14px;background:var(--paper);resize:none;height:44px;
+}
+.chat-input:focus{outline:none;border-color:var(--blue);}
+.chat-send{padding:11px 18px;border-radius:10px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;font-size:18px;transition:opacity .15s;}
+.chat-send:hover{opacity:.85;}
+.chat-send:disabled{opacity:.4;cursor:not-allowed;}
+
+.chat-placeholder{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;color:var(--ink-soft);text-align:center;padding:40px;
+}
+.chat-placeholder .ph-icon{font-size:40px;margin-bottom:6px;}
+
+/* ── LOADING SPINNER ────────────────────────────────────────── */
+.spinner{
+  display:inline-block;width:20px;height:20px;border:2.5px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;
+}
+.spinner-dark{border-color:rgba(27,35,64,0.2);border-top-color:var(--ink);}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.loading-state{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:48px;color:var(--ink-soft);font-size:14px;
+}
+
+/* ── PROGRESS VIEW ─────────────────────────────────────────── */
+.progress-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .dashboard-grid{grid-template-columns:1fr;}
+  .progress-grid{grid-template-columns:1fr;}
+  .chat-layout{flex-direction:column;height:auto;}
+  .chat-doc-panel{width:100%;flex-direction:row;flex-wrap:wrap;}
+  .flashcard-3d{width:100%;}
+}
+@media(max-width:640px){
+  .app-sidebar{display:none;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  :root{--sidebar:0px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- AUTH MODAL                                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <div class="logo-mark"><span></span></div>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;">SmartStudy AI</span>
+    </div>
+    <div class="auth-tabs" id="authTabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign in</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Create account</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" required maxlength="72" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" id="loginBtn">
+        Sign in
+      </button>
+      <p style="text-align:center;font-size:13px;color:var(--ink-soft);margin-top:14px;">
+        No account? <a href="#" onclick="switchAuthTab('register');return false;" style="color:var(--blue);font-weight:600;">Create one free →</a>
+      </p>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="registerForm" style="display:none;" onsubmit="doRegister(event)">
+      <div class="form-group">
+        <label>Full name</label>
+        <input type="text" id="regName" placeholder="Your name" required autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password <span style="font-weight:400;color:var(--ink-ghost)">(min 6 chars)</span></label>
+        <input type="password" id="regPassword" placeholder="Create a password" required minlength="6" maxlength="72" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>I am a…</label>
+        <select id="regRole">
+          <option value="student">Student</option>
+          <option value="parent">Parent</option>
+          <option value="teacher">Teacher / Educator</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" id="registerBtn">
+        Create account
+      </button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- LANDING PAGE                                                -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="landing-page">
+
+<header>
+  <nav style="max-width:1180px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:78px;position:sticky;top:0;z-index:50;background:rgba(250,247,239,0.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);">
+    <div style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;font-family:'Space Grotesk',sans-serif;">
+      <div class="logo-mark"><span></span></div> SmartStudy AI
+    </div>
+    <div style="display:flex;gap:34px;font-size:15px;font-weight:500;color:var(--ink-soft);">
+      <a href="#problem" style="color:inherit;text-decoration:none;">Why it exists</a>
+      <a href="#features" style="color:inherit;text-decoration:none;">Features</a>
+      <a href="#audience" style="color:inherit;text-decoration:none;">For you</a>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="openAuthModal('login')">Sign in</button>
+      <button class="btn btn-primary btn-sm" onclick="openAuthModal('register')">Get started free</button>
+    </div>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section style="padding:80px 0 40px;max-width:1180px;margin:0 auto;padding-left:32px;padding-right:32px;">
+  <div style="display:grid;grid-template-columns:1.05fr 0.95fr;gap:60px;align-items:center;">
+    <div>
+      <div style="display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px;gap:4px;margin-bottom:28px;box-shadow:var(--shadow);scroll-margin-top:100px;" id="audience">
+        <div id="audiencePill" style="display:contents;">
+        <button style="border:none;background:var(--ink);color:var(--paper);padding:9px 18px;border-radius:999px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;" data-mode="student">I'm a student</button>
+        <button style="border:none;background:transparent;padding:9px 18px;border-radius:999px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink-soft);" data-mode="parent">I'm a parent</button>
+      </div>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--pink-dark);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">AI-powered study companion</div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:54px;font-weight:700;line-height:1.05;margin-bottom:22px;letter-spacing:-0.01em;">Turn any notes into <span style="position:relative;white-space:nowrap;">smarter study<svg style="position:absolute;left:-4px;right:-4px;bottom:-2px;top:8px;width:calc(100% + 8px);height:auto;z-index:-1;" viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M2 18 C 80 4, 220 4, 298 16" stroke="#D7EA4C" stroke-width="16" fill="none" stroke-linecap="round"/></svg></span> habits.</h1>
+      <p style="font-size:18px;color:var(--ink-soft);max-width:480px;margin-bottom:30px;" id="heroSub">Upload a PDF or a page of notes and SmartStudy AI builds flashcards, quizzes, summaries and concept maps — then tells you exactly where you're weak.</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:32px;">
+        <button class="btn btn-primary" onclick="openAuthModal('register')" style="font-size:16px;padding:14px 28px;">Get started free</button>
+        <button class="btn btn-ghost" onclick="openAuthModal('login')" style="font-size:16px;padding:14px 28px;">Sign in →</button>
+      </div>
+      <div style="display:flex;gap:28px;flex-wrap:wrap;">
+        <div style="border-left:2px solid var(--line);padding-left:14px;"><b style="display:block;font-family:'Space Grotesk',sans-serif;font-size:24px;">90%+</b><span style="font-size:13px;color:var(--ink-soft);">Quiz generation accuracy</span></div>
+        <div style="border-left:2px solid var(--line);padding-left:14px;"><b style="display:block;font-family:'Space Grotesk',sans-serif;font-size:24px;">6</b><span style="font-size:13px;color:var(--ink-soft);">AI-driven study tools</span></div>
+        <div style="border-left:2px solid var(--line);padding-left:14px;"><b style="display:block;font-family:'Space Grotesk',sans-serif;font-size:24px;">Free</b><span style="font-size:13px;color:var(--ink-soft);">For all students</span></div>
+      </div>
+    </div>
+    <!-- Demo card -->
+    <div style="position:relative;height:380px;display:flex;align-items:center;justify-content:center;">
+      <div style="position:absolute;background:var(--card);border:1.5px solid var(--ink);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;box-shadow:5px 5px 0 var(--ink);display:flex;align-items:center;gap:8px;top:10px;right:40px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);display:block;"></span>NLP summary ready
+      </div>
+      <div style="width:320px;height:210px;perspective:1200px;cursor:pointer;" id="demoCard">
+        <div id="demoCardInner" style="position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;">
+          <div style="position:absolute;inset:0;border-radius:16px;padding:26px;backface-visibility:hidden;border:1.5px solid var(--ink);background:var(--card);display:flex;flex-direction:column;justify-content:space-between;box-shadow:8px 8px 0 var(--ink);">
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);">Flashcard · tap to flip</span>
+            <span style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;">What does NLP stand for in SmartStudy AI's engine?</span>
+            <span style="font-size:13px;color:var(--ink-soft);">Chapter 2 · Study set: AI Fundamentals</span>
+          </div>
+          <div style="position:absolute;inset:0;border-radius:16px;padding:26px;backface-visibility:hidden;border:1.5px solid var(--ink);background:var(--lime);display:flex;flex-direction:column;justify-content:space-between;box-shadow:8px 8px 0 var(--ink);transform:rotateY(180deg);">
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);">Answer</span>
+            <span style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;">Natural Language Processing</span>
+            <span style="font-size:13px;color:var(--ink-soft);">Used to summarize notes and generate quiz questions.</span>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;background:var(--pink);border:1.5px solid var(--ink);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;box-shadow:5px 5px 0 var(--ink);display:flex;align-items:center;gap:8px;bottom:22px;right:6px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--pink-dark);display:block;"></span>Weak topic flagged
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="scroll-margin-top:100px;padding:80px 0;max-width:1180px;margin:0 auto;padding-left:32px;padding-right:32px;">
+  <div style="margin-bottom:48px;">
+    <div style="font-size:14px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;">What's inside</div>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;">Six tools, one study session.</h2>
+    <p style="color:var(--ink-soft);font-size:17px;margin-top:12px;">Everything you need to go from raw notes to exam-ready.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;" id="featuresGrid">
+    <div class="card" style="border-color:var(--line);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="font-size:24px;margin-bottom:14px;background:#EAF3DE;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;">📄</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:8px;">Auto summarization</h3>
+      <p style="font-size:14px;color:var(--ink-soft);">Upload PDFs or notes and get instant, concise summaries powered by NLP.</p>
+    </div>
+    <div class="card" style="transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="font-size:24px;margin-bottom:14px;background:#FBEAF0;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;">🃏</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:8px;">Smart flashcards</h3>
+      <p style="font-size:14px;color:var(--ink-soft);">AI-generated flashcards with SM-2 spaced-repetition scheduling built in.</p>
+    </div>
+    <div class="card" style="transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="font-size:24px;margin-bottom:14px;background:#E6F1FB;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;">📝</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:8px;">Quiz generator</h3>
+      <p style="font-size:14px;color:var(--ink-soft);">Auto-creates MCQs, fill-in-the-blank, and short-answer quizzes.</p>
+    </div>
+    <div class="card" style="transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="font-size:24px;margin-bottom:14px;background:#FAEEDA;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;">📊</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:8px;">Performance dashboard</h3>
+      <p style="font-size:14px;color:var(--ink-soft);">Tracks scores, weak areas, and study streaks visually over time.</p>
+    </div>
+    <div class="card" style="transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="font-size:24px;margin-bottom:14px;background:#EEEDFE;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;">🗺️</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:8px;">Concept mapping</h3>
+      <p style="font-size:14px;color:var(--ink-soft);">Visual mind maps that link related topics from your material.</p>
+    </div>
+    <div class="card" style="transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="font-size:24px;margin-bottom:14px;background:#E1F5EE;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;">🤖</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:8px;">AI tutor chat</h3>
+      <p style="font-size:14px;color:var(--ink-soft);">Ask questions about your uploaded material and get answers in real time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA SECTION -->
+<section id="cta" style="padding:0 32px 80px;max-width:1180px;margin:0 auto;">
+  <div style="background:var(--ink);border-radius:28px;padding:70px 50px;text-align:center;color:var(--paper);position:relative;overflow:hidden;">
+    <h2 style="font-family:'Space Grotesk',sans-serif;color:var(--paper);font-size:36px;margin-bottom:14px;">Study smarter starts with one upload.</h2>
+    <p style="color:#B9C0DE;font-size:16px;margin-bottom:32px;">Free for students. Built for parents and teachers to see the progress, not police it.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn" style="background:var(--lime);color:var(--ink);border-color:var(--lime);font-size:16px;padding:14px 28px;" onclick="openAuthModal('register')">Get started free</button>
+      <button class="btn" style="color:var(--paper);border-color:rgba(255,255,255,0.4);font-size:16px;padding:14px 28px;" onclick="openAuthModal('login')">Sign in to your account</button>
+    </div>
+  </div>
+</section>
+
+<footer style="padding:32px;max-width:1180px;margin:0 auto;">
+  <div style="border-top:1px solid var(--line);padding-top:28px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:20px;">
+    <div style="display:flex;align-items:center;gap:9px;font-weight:700;font-family:'Space Grotesk',sans-serif;">
+      <div class="logo-mark"><span></span></div> SmartStudy AI
+    </div>
+    <div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">
+      <b style="color:var(--ink);">Group leader:</b> Kartikay Hiraskar<br>
+      <b style="color:var(--ink);">Group members:</b> Swarnim Kumbhar · Sanchita Khade · Sakshi Mangure<br>
+      <b style="color:var(--ink);">Course:</b> AIML · June 2026
+    </div>
+  </div>
+</footer>
+</div><!-- /landing-page -->
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- APP SHELL (shown after login)                               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="app-shell">
+
+  <!-- TOP BAR -->
+  <div class="app-topbar">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div class="topbar-logo">
+        <div class="logo-mark"><span></span></div>
+        SmartStudy AI
+      </div>
+      <span class="topbar-mode-badge" id="aiModeBadge">DEMO MODE</span>
+    </div>
+    <div class="topbar-user">
+      <span style="font-size:14px;color:var(--ink-soft);" id="topbarGreeting">Hello!</span>
+      <div class="user-avatar" id="userAvatar">?</div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <div class="app-sidebar">
+      <div class="nav-section">
+        <div class="nav-label">Menu</div>
+        <button class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard">
+          <span class="nav-icon">📊</span> Dashboard
+        </button>
+        <button class="nav-item" onclick="showView('documents')" id="nav-documents">
+          <span class="nav-icon">📄</span> Documents
+        </button>
+        <button class="nav-item" onclick="showView('flashcards')" id="nav-flashcards">
+          <span class="nav-icon">🃏</span> Flashcards
+        </button>
+        <button class="nav-item" onclick="showView('quiz')" id="nav-quiz">
+          <span class="nav-icon">📝</span> Quiz
+        </button>
+        <button class="nav-item" onclick="showView('tutor')" id="nav-tutor">
+          <span class="nav-icon">🤖</span> AI Tutor
+        </button>
+        <button class="nav-item" onclick="showView('progress')" id="nav-progress">
+          <span class="nav-icon">📈</span> Progress
+        </button>
+      </div>
+      <div class="nav-streak">
+        <div class="streak-card">
+          <div class="streak-num" id="streakNum">0</div>
+          <div class="streak-label">day study streak 🔥</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="app-main">
+
+      <!-- ── DASHBOARD VIEW ─────────────────────────────────── -->
+      <div class="view active" id="view-dashboard">
+        <div class="view-header">
+          <div>
+            <h2 id="dashWelcome">Welcome back!</h2>
+            <p>Here's your study overview.</p>
+          </div>
+          <button class="btn btn-lime btn-sm" onclick="showView('documents')">+ Upload notes</button>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-value" id="statDocs">–</div><div class="stat-label">Documents</div></div>
+          <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="statScore">–</div><div class="stat-label">Avg quiz score</div></div>
+          <div class="stat-card"><div class="stat-icon">🃏</div><div class="stat-value" id="statCards">–</div><div class="stat-label">Cards reviewed</div></div>
+          <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="statMinutes">–</div><div class="stat-label">Study minutes</div></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card card-raised">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+              <h3 style="font-size:16px;">Subject progress</h3>
+              <span class="badge badge-blue" id="quizCountBadge">0 quizzes</span>
+            </div>
+            <div id="subjectBars">
+              <div class="loading-state"><div class="spinner spinner-dark"></div>Loading…</div>
+            </div>
+          </div>
+          <div class="card card-raised">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+              <h3 style="font-size:16px;">Weak topics</h3>
+              <span class="badge badge-pink" id="weakBadge">0 flagged</span>
+            </div>
+            <div class="weak-topic-list" id="weakTopicList">
+              <div style="text-align:center;padding:20px;color:var(--ink-soft);font-size:14px;">No weak topics yet — take a quiz to get started!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DOCUMENTS VIEW ─────────────────────────────────── -->
+      <div class="view" id="view-documents">
+        <div class="view-header">
+          <div><h2>My Documents</h2><p>Upload PDFs or text files to get started.</p></div>
+        </div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <input type="file" id="fileInput" accept=".pdf,.txt,.md" onchange="handleFileSelect(event)">
+          <div class="upload-icon">📤</div>
+          <h3>Drop your notes here</h3>
+          <p>PDF, TXT, or Markdown · Max 20 MB</p>
+          <button class="btn btn-primary btn-sm" style="margin-top:16px;" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Browse files</button>
+        </div>
+        <div id="uploadProgress" style="display:none;" class="card" style="padding:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="spinner spinner-dark"></div>
+            <span id="uploadStatus" style="font-size:14px;">Uploading and extracting text…</span>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-size:16px;margin-bottom:14px;" id="docsHeading">Your documents</h3>
+          <div class="doc-list" id="docList">
+            <div class="loading-state"><div class="spinner spinner-dark"></div>Loading documents…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FLASHCARDS VIEW ────────────────────────────────── -->
+      <div class="view" id="view-flashcards">
+        <div class="view-header">
+          <div><h2>Flashcards</h2><p>Spaced repetition keeps the right cards in front of you.</p></div>
+        </div>
+        <div class="fc-controls">
+          <select class="fc-doc-select" id="fcDocSelect" onchange="loadFlashcards()">
+            <option value="">Select a document…</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="generateFCBtn" onclick="generateFlashcards()" disabled>Generate flashcards</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadDueCards()" title="Show only cards due today">Due today</button>
+        </div>
+        <div id="fcContent">
+          <div class="fc-empty">
+            <div class="empty-icon">🃏</div>
+            <h3>Select a document to begin</h3>
+            <p>Choose a document above to generate or review flashcards.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── QUIZ VIEW ──────────────────────────────────────── -->
+      <div class="view" id="view-quiz">
+        <div class="view-header">
+          <div><h2>Quiz</h2><p>Test your knowledge and find your weak spots.</p></div>
+        </div>
+        <div id="quizContent">
+          <!-- Setup state -->
+          <div class="quiz-setup" id="quizSetup">
+            <div class="card">
+              <h3 style="font-size:17px;margin-bottom:20px;">Generate a new quiz</h3>
+              <div class="form-group">
+                <label>Document</label>
+                <select id="quizDocSelect" class="fc-doc-select" style="max-width:100%;">
+                  <option value="">Select a document…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Number of questions</label>
+                <select id="quizCount" class="fc-doc-select" style="max-width:100%;">
+                  <option value="5">5 questions</option>
+                  <option value="10" selected>10 questions</option>
+                  <option value="15">15 questions</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="generateQuizBtn" onclick="generateQuiz()">Generate quiz</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI TUTOR VIEW ──────────────────────────────────── -->
+      <div class="view" id="view-tutor">
+        <div class="view-header">
+          <div><h2>AI Tutor</h2><p>Ask anything about your uploaded documents.</p></div>
+        </div>
+        <div class="chat-layout">
+          <div class="chat-doc-panel">
+            <div class="chat-doc-label">Documents</div>
+            <div id="chatDocList">
+              <div style="font-size:13px;color:var(--ink-soft);padding:8px;">No documents yet.</div>
+            </div>
+          </div>
+          <div class="chat-main" id="chatMain">
+            <div class="chat-placeholder" id="chatPlaceholder">
+              <div class="ph-icon">🤖</div>
+              <h3 style="font-size:16px;">Select a document to start chatting</h3>
+              <p style="font-size:14px;">The AI tutor will answer your questions using your uploaded material as context.</p>
+            </div>
+            <div class="chat-messages" id="chatMessages" style="display:none;"></div>
+            <div class="chat-input-row" id="chatInputRow" style="display:none;">
+              <textarea class="chat-input" id="chatInput" placeholder="Ask a question about your notes…" onkeydown="chatKeydown(event)" rows="1"></textarea>
+              <button class="chat-send" id="chatSendBtn" onclick="sendChatMessage()" title="Send">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PROGRESS VIEW ─────────────────────────────────── -->
+      <div class="view" id="view-progress">
+        <div class="view-header">
+          <div><h2>Progress</h2><p>Your study history and performance over time.</p></div>
+          <button class="btn btn-lime btn-sm" onclick="loadProgress()">Refresh</button>
+        </div>
+        <div class="progress-grid">
+          <div class="card card-raised">
+            <h3 style="font-size:16px;margin-bottom:16px;">Study overview</h3>
+            <div id="progressOverview">
+              <div class="loading-state"><div class="spinner spinner-dark"></div>Loading…</div>
+            </div>
+          </div>
+          <div class="card card-raised">
+            <h3 style="font-size:16px;margin-bottom:16px;">Weak topics to review</h3>
+            <div class="weak-topic-list" id="progressWeakTopics">
+              <div style="text-align:center;padding:20px;color:var(--ink-soft);font-size:14px;">Take a quiz to identify weak areas.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-raised">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="font-size:16px;">Log a study session</h3>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="form-group" style="margin:0;">
+              <label>Duration (minutes)</label>
+              <input type="number" id="sessionMinutes" value="30" min="1" max="480" style="width:140px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--line);font-family:'Inter',sans-serif;">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Flashcards reviewed</label>
+              <input type="number" id="sessionCards" value="0" min="0" style="width:140px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--line);font-family:'Inter',sans-serif;">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="logSession()">Log session</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /app-main -->
+  </div><!-- /app-body -->
+</div><!-- /app-shell -->
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════════════ */
+const API = ''; // Use the same origin as the FastAPI server to avoid localhost/127.0.0.1 CORS issues
+let authToken = localStorage.getItem('smartstudy_token') || null;
+let currentUser = JSON.parse(localStorage.getItem('smartstudy_user') || 'null');
+let allDocs = [];
+let activeDoc = null;
+let activeChatDocId = null;
+
+/* ══════════════════════════════════════════════════════════════
+   API HELPERS
+══════════════════════════════════════════════════════════════ */
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  if (opts.body instanceof FormData) delete headers['Content-Type'];
+  let res;
+  try {
+    res = await fetch(API + path, { ...opts, headers });
+  } catch (networkErr) {
+    throw new Error('Cannot connect to SmartStudy backend. Make sure the black backend window is still running.');
+  }
+  if (res.status === 401) { doLogout(); throw new Error('Unauthorized'); }
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = `HTTP ${res.status}`;
+    try { detail = JSON.parse(text).detail || detail; } catch (_) { if (text) detail = text.slice(0, 180); }
+    throw new Error(detail);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+function apiForm(path, formData) {
+  const headers = {};
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  return fetch(API + path, { method: 'POST', headers, body: formData })
+    .then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.detail); }); return r.json(); });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════════ */
+function toast(msg, type = 'info', duration = 3500) {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), duration);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════════════ */
+function openAuthModal(tab = 'login') {
+  switchAuthTab(tab);
+  document.getElementById('authModal').classList.add('open');
+}
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('open');
+}
+function switchAuthTab(tab) {
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Signing in…';
+  try {
+    const data = await api('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value })
+    });
+    authToken = data.access_token;
+    localStorage.setItem('smartstudy_token', authToken);
+    const me = await api('/auth/me');
+    currentUser = me;
+    localStorage.setItem('smartstudy_user', JSON.stringify(me));
+    closeAuthModal();
+    enterApp();
+    toast('Welcome back, ' + me.name.split(' ')[0] + '!', 'success');
+  } catch(err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+  }
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating account…';
+  try {
+    await api('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPassword').value,
+        role: document.getElementById('regRole').value,
+      })
+    });
+    toast('Account created! Signing you in…', 'success');
+    // Auto-login
+    document.getElementById('loginEmail').value = document.getElementById('regEmail').value;
+    document.getElementById('loginPassword').value = document.getElementById('regPassword').value;
+    await doLogin({ preventDefault: () => {} });
+  } catch(err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create account';
+  }
+}
+
+function doLogout() {
+  authToken = null;
+  currentUser = null;
+  localStorage.removeItem('smartstudy_token');
+  localStorage.removeItem('smartstudy_user');
+  document.getElementById('app-shell').classList.remove('visible');
+  document.getElementById('landing-page').style.display = '';
+  toast('Signed out.', 'info');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   APP INIT
+══════════════════════════════════════════════════════════════ */
+function enterApp() {
+  document.getElementById('landing-page').style.display = 'none';
+  document.getElementById('app-shell').classList.add('visible');
+  // Update UI with user info
+  const name = currentUser?.name || 'User';
+  document.getElementById('topbarGreeting').textContent = 'Hello, ' + name.split(' ')[0];
+  document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+  document.getElementById('dashWelcome').textContent = 'Welcome back, ' + name.split(' ')[0] + '!';
+  // Check AI mode
+  fetch(API + '/').then(r => r.json()).then(d => {
+    const badge = document.getElementById('aiModeBadge');
+    badge.textContent = d.ai_mode === 'gemini' ? 'Gemini AI' : 'DEMO MODE';
+    badge.style.background = d.ai_mode === 'gemini' ? '#DCFCE7' : 'var(--lime-bg)';
+  }).catch(() => {});
+  // Load all data
+  loadDashboard();
+  loadDocuments();
+}
+
+// Navigation anchors: explicit smooth scrolling with a sticky-header offset.
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', (e) => {
+    const id = link.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    history.replaceState(null, '', '#' + id);
+  });
+});
+
+// Auto-login on page load if token exists
+window.addEventListener('DOMContentLoaded', () => {
+  // Demo card flip
+  document.getElementById('demoCard').addEventListener('click', function() {
+    const inner = document.getElementById('demoCardInner');
+    const isFlipped = inner.style.transform === 'rotateY(180deg)';
+    inner.style.transform = isFlipped ? '' : 'rotateY(180deg)';
+  });
+  // Audience pill
+  document.querySelectorAll('#audiencePill button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#audiencePill button').forEach(b => {
+        b.style.background = 'transparent'; b.style.color = 'var(--ink-soft)';
+      });
+      btn.style.background = 'var(--ink)'; btn.style.color = 'var(--paper)';
+      const sub = { student: "Upload a PDF or a page of notes and SmartStudy AI builds flashcards, quizzes, summaries and concept maps — then tells you exactly where you're weak.", parent: "See how your child is studying without reading their notes for them: weekly progress reports, weak-topic flags, and study streaks, all in one dashboard." };
+      document.getElementById('heroSub').textContent = sub[btn.dataset.mode];
+    });
+  });
+
+  if (authToken && currentUser) {
+    api('/auth/me').then(() => enterApp()).catch(() => { authToken = null; localStorage.removeItem('smartstudy_token'); });
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   NAV
+══════════════════════════════════════════════════════════════ */
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'progress') loadProgress();
+  if (name === 'flashcards') populateFCDocSelect();
+  if (name === 'quiz') populateQuizDocSelect();
+  if (name === 'tutor') populateChatDocList();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const dash = await api('/progress/dashboard');
+    document.getElementById('statScore').textContent = dash.avg_quiz_score ? dash.avg_quiz_score + '%' : '–';
+    document.getElementById('statCards').textContent = dash.total_flashcards_reviewed;
+    document.getElementById('statMinutes').textContent = dash.total_study_minutes;
+    document.getElementById('streakNum').textContent = dash.streak_days;
+    // Subject bars
+    const bars = document.getElementById('subjectBars');
+    if (dash.subject_progress.length === 0) {
+      bars.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-soft);font-size:14px;">Take a quiz to see subject progress!</div>';
+      document.getElementById('quizCountBadge').textContent = '0 quizzes';
+    } else {
+      bars.innerHTML = dash.subject_progress.slice(0, 6).map(s => `
+        <div class="bar-row">
+          <span class="bar-label">${esc(s.subject)}</span>
+          <div class="bar-track"><div class="bar-fill ${s.score_pct < 60 ? 'weak' : ''}" style="width:${s.score_pct}%"></div></div>
+          <span class="bar-pct">${s.score_pct}%</span>
+        </div>`).join('');
+      document.getElementById('quizCountBadge').textContent = dash.subject_progress.length + ' subjects';
+    }
+    // Weak topics
+    const wl = document.getElementById('weakTopicList');
+    document.getElementById('weakBadge').textContent = dash.weak_topics.length + ' flagged';
+    if (dash.weak_topics.length === 0) {
+      wl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-soft);font-size:14px;">No weak topics yet — take a quiz to get started!</div>';
+    } else {
+      wl.innerHTML = dash.weak_topics.slice(0, 5).map(wt => `
+        <div class="weak-topic-item">
+          <span class="weak-topic-name">${esc(wt.topic)}</span>
+          <span class="weak-topic-score">${wt.score_pct}%</span>
+        </div>`).join('');
+    }
+  } catch(e) { console.warn('Dashboard load failed', e); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DOCUMENTS
+══════════════════════════════════════════════════════════════ */
+async function loadDocuments() {
+  const list = document.getElementById('docList');
+  list.innerHTML = '<div class="loading-state"><div class="spinner spinner-dark"></div>Loading…</div>';
+  try {
+    allDocs = await api('/documents/');
+    document.getElementById('statDocs').textContent = allDocs.length;
+    renderDocList(allDocs);
+    populateFCDocSelect(); populateQuizDocSelect(); populateChatDocList();
+  } catch(e) {
+    list.innerHTML = '<div style="padding:20px;color:var(--red);">Could not load documents.</div>';
+  }
+}
+
+function renderDocList(docs) {
+  const list = document.getElementById('docList');
+  document.getElementById('docsHeading').textContent = `Your documents (${docs.length})`;
+  if (docs.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink-soft);">No documents yet — upload your first one above!</div>';
+    return;
+  }
+  list.innerHTML = docs.map(d => `
+    <div class="doc-item" id="docitem-${d.id}">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <div class="doc-title">${esc(d.title)}</div>
+        <div class="doc-meta">${formatBytes(d.file_size)} · ${d.page_count} page${d.page_count !== 1 ? 's' : ''} · ${formatDate(d.created_at)}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+          ${d.has_summary ? '<span class="badge badge-lime">Summary ✓</span>' : '<span class="badge" style="background:var(--paper-2);color:var(--ink-soft);">No summary</span>'}
+          ${d.has_concept_map ? '<span class="badge badge-blue">Concept map ✓</span>' : ''}
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="getSummary('${d.id}')">Summarise</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteDoc('${d.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// Drag & drop
+function onDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('dragging'); }
+function onDragLeave() { document.getElementById('uploadZone').classList.remove('dragging'); }
+function onDrop(e) { e.preventDefault(); onDragLeave(); if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]); }
+function handleFileSelect(e) { if (e.target.files[0]) uploadFile(e.target.files[0]); }
+
+async function uploadFile(file) {
+  const prog = document.getElementById('uploadProgress');
+  const status = document.getElementById('uploadStatus');
+  prog.style.display = 'block';
+  status.textContent = `Uploading "${file.name}"…`;
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const doc = await apiForm('/documents/upload', fd);
+    toast('Uploaded successfully! Text extracted.', 'success');
+    status.textContent = 'Processing complete!';
+    allDocs.unshift(doc);
+    document.getElementById('statDocs').textContent = allDocs.length;
+    renderDocList(allDocs);
+    populateFCDocSelect(); populateQuizDocSelect(); populateChatDocList();
+    // Auto-generate summary
+    getSummary(doc.id);
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+  } finally {
+    setTimeout(() => { prog.style.display = 'none'; }, 1500);
+    document.getElementById('fileInput').value = '';
+  }
+}
+
+async function getSummary(docId) {
+  const docItem = document.getElementById('docitem-' + docId);
+  if (!docItem) return;
+  // Remove old summary panel
+  const old = document.getElementById('summary-' + docId);
+  if (old) old.remove();
+  toast('Generating summary…', 'info');
+  try {
+    const s = await api(`/summaries/${docId}`);
+    const panel = document.createElement('div');
+    panel.id = 'summary-' + docId;
+    panel.className = 'summary-panel';
+    panel.innerHTML = `<h4>AI Summary</h4><p>${esc(s.summary)}</p>`;
+    docItem.insertAdjacentElement('afterend', panel);
+    toast('Summary ready!', 'success');
+    loadDocuments();
+  } catch(e) {
+    toast('Summary failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteDoc(docId) {
+  if (!confirm('Delete this document and all its flashcards and quizzes?')) return;
+  try {
+    await api(`/documents/${docId}`, { method: 'DELETE' });
+    allDocs = allDocs.filter(d => d.id !== docId);
+    document.getElementById('statDocs').textContent = allDocs.length;
+    renderDocList(allDocs);
+    populateFCDocSelect(); populateQuizDocSelect(); populateChatDocList();
+    toast('Document deleted.', 'info');
+  } catch(e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FLASHCARDS
+══════════════════════════════════════════════════════════════ */
+let fcCards = [], fcIndex = 0, fcFlipped = false;
+
+function populateFCDocSelect() {
+  const sel = document.getElementById('fcDocSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Select a document…</option>' + allDocs.map(d => `<option value="${d.id}">${esc(d.title)}</option>`).join('');
+  sel.value = cur;
+  document.getElementById('generateFCBtn').disabled = !sel.value;
+}
+
+async function loadFlashcards() {
+  const docId = document.getElementById('fcDocSelect').value;
+  document.getElementById('generateFCBtn').disabled = !docId;
+  if (!docId) return;
+  const content = document.getElementById('fcContent');
+  content.innerHTML = '<div class="loading-state"><div class="spinner spinner-dark"></div>Loading flashcards…</div>';
+  try {
+    fcCards = await api(`/flashcards/${docId}`);
+    fcIndex = 0;
+    renderFlashcardSession(fcCards, 'All cards');
+  } catch(e) {
+    content.innerHTML = '<div class="fc-empty"><div class="empty-icon">🃏</div><h3>No flashcards yet</h3><p>Click "Generate flashcards" to create them from this document.</p></div>';
+  }
+}
+
+async function loadDueCards() {
+  const content = document.getElementById('fcContent');
+  content.innerHTML = '<div class="loading-state"><div class="spinner spinner-dark"></div>Loading due cards…</div>';
+  try {
+    fcCards = await api('/flashcards/due');
+    fcIndex = 0;
+    if (fcCards.length === 0) {
+      content.innerHTML = '<div class="fc-done"><div class="done-icon">🎉</div><h3>All caught up!</h3><p>No cards are due for review today. Come back tomorrow!</p></div>';
+    } else {
+      renderFlashcardSession(fcCards, `${fcCards.length} due today`);
+    }
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function generateFlashcards() {
+  const docId = document.getElementById('fcDocSelect').value;
+  if (!docId) return;
+  const btn = document.getElementById('generateFCBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  toast('Generating flashcards…', 'info');
+  try {
+    const res = await api(`/flashcards/${docId}/generate?count=10`, { method: 'POST' });
+    fcCards = res.flashcards;
+    fcIndex = 0;
+    renderFlashcardSession(fcCards, `${fcCards.length} new cards`);
+    toast(`${res.generated_count} flashcards generated!`, 'success');
+  } catch(e) { toast('Generation failed: ' + e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Generate flashcards'; }
+}
+
+function renderFlashcardSession(cards, label) {
+  const content = document.getElementById('fcContent');
+  if (!cards.length) {
+    content.innerHTML = '<div class="fc-empty"><div class="empty-icon">🃏</div><h3>No flashcards</h3><p>Generate flashcards from a document to begin.</p></div>';
+    return;
+  }
+  fcFlipped = false;
+  content.innerHTML = `
+    <div class="fc-stage">
+      <div style="display:flex;align-items:center;gap:16px;width:100%;max-width:520px;">
+        <span class="badge badge-blue">${esc(label)}</span>
+        <div class="fc-progress-bar" style="flex:1;"><div class="fc-progress-fill" id="fcProgressFill" style="width:${(1/cards.length*100).toFixed(0)}%"></div></div>
+        <span class="fc-counter" id="fcCounter">1 / ${cards.length}</span>
+      </div>
+      <div class="flashcard-3d" id="fc3d" onclick="flipCard()">
+        <div class="flashcard-3d-inner" id="fc3dInner">
+          <div class="fc-face fc-face-front">
+            <span class="fc-tag" id="fcTopic">Question</span>
+            <span class="fc-q" id="fcQuestion">${esc(cards[0].question)}</span>
+            <span class="fc-hint">Tap to reveal answer</span>
+          </div>
+          <div class="fc-face fc-face-back">
+            <span class="fc-tag">Answer</span>
+            <span class="fc-q" id="fcAnswer">${esc(cards[0].answer)}</span>
+            <span class="fc-hint">${esc(cards[0].topic || '')}</span>
+          </div>
+        </div>
+      </div>
+      <p class="fc-tap-hint" id="fcTapHint">Tap the card to flip it</p>
+      <div class="rating-btns" id="ratingBtns" style="display:none;">
+        <button class="rating-btn r0" onclick="rateCard(0)">😰 Forgot</button>
+        <button class="rating-btn r3" onclick="rateCard(3)">🤔 Hard</button>
+        <button class="rating-btn r4" onclick="rateCard(4)">😊 Good</button>
+        <button class="rating-btn r5" onclick="rateCard(5)">🌟 Easy</button>
+      </div>
+    </div>`;
+}
+
+function flipCard() {
+  fcFlipped = !fcFlipped;
+  const inner = document.getElementById('fc3dInner');
+  if (inner) inner.style.transform = fcFlipped ? 'rotateY(180deg)' : '';
+  if (fcFlipped) {
+    document.getElementById('fcTapHint').style.display = 'none';
+    document.getElementById('ratingBtns').style.display = 'flex';
+  }
+}
+
+async function rateCard(rating) {
+  const card = fcCards[fcIndex];
+  try {
+    await api(`/flashcards/${card.id}/review`, { method: 'POST', body: JSON.stringify({ rating }) });
+  } catch(e) { console.warn(e); }
+  fcIndex++;
+  if (fcIndex >= fcCards.length) {
+    document.getElementById('fcContent').innerHTML = `
+      <div class="fc-done">
+        <div class="done-icon">🎉</div>
+        <h3>Session complete!</h3>
+        <p>You reviewed all ${fcCards.length} cards. Great work!</p>
+        <button class="btn btn-primary" style="margin-top:20px;" onclick="restartSession()">Review again</button>
+      </div>`;
+    // Log session
+    api('/progress/log-session', { method: 'POST', body: JSON.stringify({ duration_minutes: Math.max(1, Math.round(fcCards.length * 0.5)), flashcards_reviewed: fcCards.length }) }).catch(() => {});
+    loadDashboard();
+    return;
+  }
+  fcFlipped = false;
+  const card2 = fcCards[fcIndex];
+  document.getElementById('fc3dInner').style.transform = '';
+  document.getElementById('fcQuestion').textContent = card2.question;
+  document.getElementById('fcAnswer').textContent = card2.answer;
+  document.getElementById('fcTopic').textContent = card2.topic || 'Question';
+  document.getElementById('fcTapHint').style.display = 'block';
+  document.getElementById('ratingBtns').style.display = 'none';
+  const pct = ((fcIndex + 1) / fcCards.length * 100).toFixed(0);
+  document.getElementById('fcProgressFill').style.width = pct + '%';
+  document.getElementById('fcCounter').textContent = `${fcIndex + 1} / ${fcCards.length}`;
+}
+
+function restartSession() { fcIndex = 0; renderFlashcardSession(fcCards, `${fcCards.length} cards`); }
+
+/* ══════════════════════════════════════════════════════════════
+   QUIZ
+══════════════════════════════════════════════════════════════ */
+let activeQuiz = null, quizAnswers = {}, quizQIndex = 0, quizQuestions = [];
+
+function populateQuizDocSelect() {
+  const sel = document.getElementById('quizDocSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select a document…</option>' + allDocs.map(d => `<option value="${d.id}">${esc(d.title)}</option>`).join('');
+}
+
+async function generateQuiz() {
+  const docId = document.getElementById('quizDocSelect').value;
+  if (!docId) { toast('Please select a document.', 'error'); return; }
+  const count = parseInt(document.getElementById('quizCount').value);
+  const btn = document.getElementById('generateQuizBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating…';
+  toast('Generating quiz questions…', 'info');
+  try {
+    const quiz = await api('/quizzes/generate', { method: 'POST', body: JSON.stringify({ document_id: docId, num_questions: count, question_types: ['mcq', 'fill_blank'] }) });
+    const detail = await api(`/quizzes/${quiz.id}`);
+    activeQuiz = detail;
+    quizAnswers = {};
+    quizQIndex = 0;
+    quizQuestions = detail.questions;
+    renderQuizQuestion();
+    toast(`${detail.question_count} questions ready!`, 'success');
+  } catch(e) { toast('Quiz generation failed: ' + e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Generate quiz'; }
+}
+
+function renderQuizQuestion() {
+  const content = document.getElementById('quizContent');
+  const q = quizQuestions[quizQIndex];
+  const pct = ((quizQIndex + 1) / quizQuestions.length * 100).toFixed(0);
+  const isMCQ = q.question_type === 'mcq';
+  content.innerHTML = `
+    <div class="quiz-taking">
+      <div class="q-progress">
+        <span class="fc-counter">${quizQIndex + 1} / ${quizQuestions.length}</span>
+        <div class="fc-progress-bar" style="flex:1;"><div class="fc-progress-fill" style="width:${pct}%"></div></div>
+        <span class="badge badge-blue">${esc(q.topic || 'General')}</span>
+      </div>
+      <div class="question-card">
+        <div class="question-num">Question ${quizQIndex + 1} · ${q.question_type.replace('_',' ')}</div>
+        <div class="question-text">${esc(q.question_text)}</div>
+        ${isMCQ
+          ? `<div class="options-list">${(q.options || []).map(opt => `<button class="option-btn" onclick="selectOption(this, decodeURIComponent('${encodeURIComponent(opt)}'), '${q.id}')">${esc(opt)}</button>`).join('')}</div>`
+          : `<input class="fill-input" id="fillInput-${q.id}" placeholder="Type your answer…" oninput="quizAnswers['${q.id}']=this.value">`
+        }
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <button class="btn btn-ghost btn-sm" onclick="${quizQIndex > 0 ? 'prevQuestion()' : ''}" ${quizQIndex === 0 ? 'disabled' : ''}>← Back</button>
+        <button class="btn btn-primary" onclick="${quizQIndex < quizQuestions.length - 1 ? 'nextQuestion()' : 'submitQuiz()'}">
+          ${quizQIndex < quizQuestions.length - 1 ? 'Next →' : 'Submit quiz'}
+        </button>
+      </div>
+    </div>`;
+  // Restore selected answer
+  if (isMCQ && quizAnswers[q.id]) {
+    document.querySelectorAll('.option-btn').forEach(b => { if (b.textContent === quizAnswers[q.id]) b.classList.add('selected'); });
+  }
+}
+
+function selectOption(el, val, qId) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  quizAnswers[qId] = val;
+}
+
+function nextQuestion() {
+  const q = quizQuestions[quizQIndex];
+  if (!quizAnswers[q.id] && q.question_type !== 'fill_blank') {
+    toast('Please select an answer first.', 'error'); return;
+  }
+  quizQIndex++;
+  renderQuizQuestion();
+}
+
+function prevQuestion() {
+  if (quizQIndex > 0) { quizQIndex--; renderQuizQuestion(); }
+}
+
+async function submitQuiz() {
+  // Collect any fill-blank answers
+  quizQuestions.forEach(q => {
+    if (q.question_type === 'fill_blank') {
+      const inp = document.getElementById('fillInput-' + q.id);
+      if (inp) quizAnswers[q.id] = inp.value;
+    }
+  });
+  const btn = document.querySelector('#quizContent .btn-primary');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Scoring…'; }
+  try {
+    const result = await api(`/quizzes/${activeQuiz.id}/submit`, { method: 'POST', body: JSON.stringify({ answers: quizAnswers }) });
+    renderQuizResult(result);
+    loadDashboard();
+  } catch(e) { toast('Submit failed: ' + e.message, 'error'); }
+}
+
+function renderQuizResult(result) {
+  const content = document.getElementById('quizContent');
+  const scoreClass = result.score >= 70 ? 'pass' : result.score >= 40 ? 'mid' : 'fail';
+  const msg = result.score >= 70 ? 'Excellent work!' : result.score >= 40 ? 'Good effort — keep practicing!' : 'Needs more review.';
+  content.innerHTML = `
+    <div class="quiz-result">
+      <div class="card result-header">
+        <div class="result-score ${scoreClass}">${result.score}%</div>
+        <div class="result-label">${msg} · ${result.correct_count} / ${result.total_questions} correct</div>
+        ${result.weak_topics_flagged.length > 0
+          ? `<div style="margin-top:14px;">${result.weak_topics_flagged.map(t => `<span class="badge badge-pink" style="margin:3px;">${esc(t)}</span>`).join('')}<div style="font-size:13px;color:var(--ink-soft);margin-top:8px;">Flagged as weak topics</div></div>`
+          : ''}
+      </div>
+      ${result.topic_scores.length > 0 ? `
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:14px;">Score by topic</h3>
+          <div class="topic-scores">
+            ${result.topic_scores.map(ts => `
+              <div class="bar-row">
+                <span class="bar-label">${esc(ts.topic)}</span>
+                <div class="bar-track"><div class="bar-fill ${ts.is_weak ? 'weak' : ''}" style="width:${ts.score_pct}%"></div></div>
+                <span class="bar-pct">${ts.score_pct}%</span>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+      <div class="card">
+        <h3 style="font-size:16px;margin-bottom:14px;">Answer review</h3>
+        <div class="review-list">
+          ${result.questions_with_answers.map((q, i) => {
+            const userAns = quizAnswers[q.id] || '(no answer)';
+            const isCorrect = userAns.trim().toLowerCase().startsWith(q.correct_answer.trim().toLowerCase().charAt(0).toLowerCase()) || userAns.trim().toLowerCase() === q.correct_answer.trim().toLowerCase();
+            return `
+              <div class="review-item">
+                <div class="ri-q">${i+1}. ${esc(q.question_text)}</div>
+                <div class="ri-your" style="color:${isCorrect ? 'var(--green)' : 'var(--red)'};">${isCorrect ? '✓' : '✗'} Your answer: ${esc(userAns)}</div>
+                ${!isCorrect ? `<div class="ri-correct">✓ Correct: ${esc(q.correct_answer)}</div>` : ''}
+                ${q.explanation ? `<div class="ri-explain">${esc(q.explanation)}</div>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="showView('quiz')">New quiz</button>
+        <button class="btn btn-ghost" onclick="showView('progress')">View progress</button>
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AI TUTOR
+══════════════════════════════════════════════════════════════ */
+function populateChatDocList() {
+  const list = document.getElementById('chatDocList');
+  if (allDocs.length === 0) { list.innerHTML = '<div style="font-size:13px;color:var(--ink-soft);padding:8px;">No documents yet.</div>'; return; }
+  list.innerHTML = allDocs.map(d => `
+    <div class="chat-doc-item ${activeChatDocId === d.id ? 'active' : ''}" onclick="selectChatDoc('${d.id}', '${esc(d.title.replace(/'/g, "\\'"))}')">
+      ${esc(d.title)}
+    </div>`).join('');
+}
+
+async function selectChatDoc(docId, title) {
+  activeChatDocId = docId;
+  populateChatDocList();
+  // Show chat UI
+  document.getElementById('chatPlaceholder').style.display = 'none';
+  document.getElementById('chatMessages').style.display = 'flex';
+  document.getElementById('chatInputRow').style.display = 'flex';
+  // Load history
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = '<div class="loading-state"><div class="spinner spinner-dark"></div>Loading chat history…</div>';
+  try {
+    const history = await api(`/tutor/history/${docId}`);
+    msgs.innerHTML = history.length === 0
+      ? '<div style="text-align:center;padding:30px;color:var(--ink-soft);font-size:14px;">No messages yet. Ask your first question!</div>'
+      : history.map(m => `<div class="chat-msg ${m.role}"><div class="msg-role">${m.role === 'user' ? 'You' : 'SmartStudy AI'}</div>${esc(m.content)}</div>`).join('');
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) { msgs.innerHTML = ''; }
+}
+
+async function sendChatMessage() {
+  if (!activeChatDocId) { toast('Select a document first.', 'error'); return; }
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  document.getElementById('chatSendBtn').disabled = true;
+  const msgs = document.getElementById('chatMessages');
+  // Show user message
+  msgs.innerHTML += `<div class="chat-msg user"><div class="msg-role">You</div>${esc(msg)}</div>`;
+  // Show typing indicator
+  const typingId = 'typing-' + Date.now();
+  msgs.innerHTML += `<div class="chat-msg model" id="${typingId}"><div class="msg-role">SmartStudy AI</div><div class="spinner spinner-dark"></div></div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  try {
+    const res = await api('/tutor/chat', { method: 'POST', body: JSON.stringify({ message: msg, document_id: activeChatDocId }) });
+    document.getElementById(typingId)?.remove();
+    msgs.innerHTML += `<div class="chat-msg model"><div class="msg-role">SmartStudy AI</div>${esc(res.ai_response.content)}</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    toast('Chat failed: ' + e.message, 'error');
+  } finally {
+    document.getElementById('chatSendBtn').disabled = false;
+  }
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROGRESS
+══════════════════════════════════════════════════════════════ */
+async function loadProgress() {
+  const overview = document.getElementById('progressOverview');
+  const weakList = document.getElementById('progressWeakTopics');
+  overview.innerHTML = '<div class="loading-state"><div class="spinner spinner-dark"></div>Loading…</div>';
+  try {
+    const dash = await api('/progress/dashboard');
+    overview.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);">
+          <span style="font-size:14px;color:var(--ink-soft);">Study streak</span>
+          <span style="font-weight:700;">${dash.streak_days} day${dash.streak_days !== 1 ? 's' : ''} 🔥</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);">
+          <span style="font-size:14px;color:var(--ink-soft);">Total study time</span>
+          <span style="font-weight:700;">${dash.total_study_minutes} min</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);">
+          <span style="font-size:14px;color:var(--ink-soft);">Flashcards reviewed</span>
+          <span style="font-weight:700;">${dash.total_flashcards_reviewed}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;">
+          <span style="font-size:14px;color:var(--ink-soft);">Avg quiz score</span>
+          <span style="font-weight:700;">${dash.avg_quiz_score}%</span>
+        </div>
+      </div>`;
+    if (dash.weak_topics.length === 0) {
+      weakList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-soft);font-size:14px;">No weak topics identified yet.</div>';
+    } else {
+      weakList.innerHTML = dash.weak_topics.map(wt => `
+        <div class="weak-topic-item">
+          <span class="weak-topic-name">${esc(wt.topic)}</span>
+          <span class="weak-topic-score">${wt.score_pct}%</span>
+        </div>`).join('');
+    }
+  } catch(e) { overview.innerHTML = '<div style="color:var(--red);padding:16px;">Failed to load progress.</div>'; }
+}
+
+async function logSession() {
+  const mins = parseInt(document.getElementById('sessionMinutes').value) || 0;
+  const cards = parseInt(document.getElementById('sessionCards').value) || 0;
+  try {
+    await api('/progress/log-session', { method: 'POST', body: JSON.stringify({ duration_minutes: mins, flashcards_reviewed: cards }) });
+    toast(`Session logged: ${mins} minutes`, 'success');
+    loadDashboard(); loadProgress();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════════ */
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function formatBytes(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+function formatDate(d) { return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }); }
+</script>
+</body>
+</html>

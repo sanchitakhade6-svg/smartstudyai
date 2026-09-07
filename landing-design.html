@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartStudy AI — Study Smarter, Not Harder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2340;
+    --ink-soft:#3A436A;
+    --paper:#FAF7EF;
+    --paper-2:#F2EDE0;
+    --card:#FFFFFF;
+    --lime:#D7EA4C;
+    --lime-dark:#8FA324;
+    --pink:#FF6FA6;
+    --pink-dark:#B23F6C;
+    --blue:#4C6FFF;
+    --line:rgba(27,35,64,0.12);
+    --radius:18px;
+    --shadow:0 10px 30px rgba(27,35,64,0.08);
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--ink);
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .marginalia{
+    font-family:'Caveat',cursive;
+    font-weight:600;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 32px;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:14px 26px;border-radius:999px;font-weight:600;font-size:15px;
+    cursor:pointer;border:2px solid var(--ink);transition:transform .15s ease, box-shadow .15s ease;
+    font-family:'Inter',sans-serif;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn-primary{background:var(--ink);color:var(--paper);}
+  .btn-primary:hover{box-shadow:0 8px 0 0 var(--lime-dark);}
+  .btn-ghost{background:transparent;color:var(--ink);}
+  .btn-ghost:hover{background:var(--paper-2);}
+
+  /* NAV */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(250,247,239,0.88);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  nav.wrap{display:flex;align-items:center;justify-content:space-between;height:78px;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;font-family:'Space Grotesk',sans-serif;}
+  .logo-mark{
+    width:34px;height:34px;border-radius:10px;background:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .logo-mark span{
+    width:14px;height:14px;background:var(--lime);border-radius:3px;
+    transform:rotate(-8deg);
+  }
+  .nav-links{display:flex;gap:34px;font-size:15px;font-weight:500;color:var(--ink-soft);}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{display:flex;gap:14px;align-items:center;}
+  .menu-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px;}
+  .menu-toggle span{display:block;width:22px;height:2px;background:var(--ink);margin:5px 0;}
+
+  /* HERO */
+  .hero{padding:76px 0 40px;position:relative;overflow:hidden;}
+  .hero-grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:60px;align-items:center;}
+  .audience-pill{
+    display:inline-flex;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:5px;gap:4px;margin-bottom:28px;box-shadow:var(--shadow);
+  }
+  .audience-pill button{
+    border:none;background:transparent;padding:9px 18px;border-radius:999px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink-soft);
+    transition:all .2s ease;
+  }
+  .audience-pill button.active{background:var(--ink);color:var(--paper);}
+  .eyebrow{font-size:14px;font-weight:600;color:var(--pink-dark);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;}
+  h1.headline{font-size:56px;font-weight:700;line-height:1.05;margin-bottom:22px;}
+  .hl-mark{position:relative;white-space:nowrap;}
+  .hl-mark svg{position:absolute;left:-4px;right:-4px;bottom:-2px;top:8px;width:calc(100% + 8px);height:auto;z-index:-1;}
+  .sub{font-size:18px;color:var(--ink-soft);max-width:480px;margin-bottom:30px;}
+  .hero-ctas{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:26px;}
+  .hero-stats{display:flex;gap:28px;margin-top:34px;flex-wrap:wrap;}
+  .hero-stats div{border-left:2px solid var(--line);padding-left:14px;}
+  .hero-stats b{display:block;font-family:'Space Grotesk',sans-serif;font-size:24px;}
+  .hero-stats span{font-size:13px;color:var(--ink-soft);}
+
+  /* Flashcard demo */
+  .card-stage{position:relative;height:420px;display:flex;align-items:center;justify-content:center;}
+  .flashcard{
+    width:320px;height:210px;perspective:1200px;cursor:pointer;position:absolute;
+  }
+  .flashcard-inner{
+    position:relative;width:100%;height:100%;text-align:left;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;
+  }
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .face{
+    position:absolute;inset:0;border-radius:16px;padding:26px;
+    backface-visibility:hidden;border:1.5px solid var(--ink);
+    display:flex;flex-direction:column;justify-content:space-between;
+    box-shadow:8px 8px 0 var(--ink);
+  }
+  .face-front{background:var(--card);}
+  .face-back{background:var(--lime);transform:rotateY(180deg);}
+  .face .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);}
+  .face .q{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;}
+  .face .hint{font-size:13px;color:var(--ink-soft);}
+  .flashcard.card-2{top:-58px;left:60px;width:230px;height:150px;transform:rotate(6deg);opacity:.9;z-index:0;}
+  .flashcard.card-2 .face{box-shadow:6px 6px 0 var(--ink);}
+  .flashcard.card-1{z-index:1;}
+  .badge-float{
+    position:absolute;background:var(--pink);border:1.5px solid var(--ink);border-radius:12px;
+    padding:10px 14px;font-size:13px;font-weight:600;box-shadow:5px 5px 0 var(--ink);
+    display:flex;align-items:center;gap:8px;
+  }
+  .badge-float.b1{bottom:22px;right:6px;}
+  .badge-float.b2{top:10px;right:40px;background:var(--card);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ink);}
+
+  section{padding:96px 0;}
+  .section-head{max-width:640px;margin-bottom:56px;}
+  .section-head .eyebrow{color:var(--blue);}
+  .section-head h2{font-size:38px;font-weight:700;line-height:1.15;}
+  .section-head p{color:var(--ink-soft);font-size:17px;margin-top:14px;}
+
+  /* PROBLEM */
+  .problem-section{background:var(--ink);color:var(--paper);}
+  .problem-section .eyebrow{color:var(--lime);}
+  .problem-section .section-head h2{color:var(--paper);}
+  .problem-section .section-head p{color:#B9C0DE;}
+  .problem-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;}
+  .problem-card{
+    background:#242C4E;border-radius:16px;padding:28px;border:1px solid rgba(255,255,255,0.08);
+  }
+  .problem-card .num{font-family:'Space Grotesk',sans-serif;color:var(--lime);font-size:14px;font-weight:700;margin-bottom:14px;}
+  .problem-card p{color:#D6DAF0;font-size:15.5px;margin:0;}
+
+  /* SOLUTION FLOW */
+  .flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center;margin-top:20px;}
+  .flow-step{
+    background:var(--card);border:1.5px solid var(--ink);border-radius:16px;padding:22px 20px;
+    width:190px;text-align:center;box-shadow:5px 5px 0 var(--ink);
+  }
+  .flow-step .ic{font-size:26px;margin-bottom:10px;}
+  .flow-step h4{font-family:'Space Grotesk',sans-serif;font-size:15px;margin:0 0 6px;}
+  .flow-step p{font-size:13px;color:var(--ink-soft);margin:0;}
+  .flow-arrow{font-size:22px;color:var(--ink-soft);padding:0 14px;}
+
+  /* FEATURES */
+  .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .feature-card{
+    background:var(--card);border-radius:var(--radius);padding:30px 26px;border:1px solid var(--line);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .feature-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);}
+  .feature-icon{
+    width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;margin-bottom:18px;
+  }
+  .feature-card h3{font-size:18px;margin-bottom:8px;}
+  .feature-card p{font-size:14.5px;color:var(--ink-soft);margin:0;}
+
+  /* AUDIENCE TABS */
+  .audience-section{background:var(--paper-2);}
+  .tabs{display:flex;gap:10px;margin-bottom:40px;flex-wrap:wrap;}
+  .tab-btn{
+    padding:12px 22px;border-radius:999px;border:1.5px solid var(--ink);background:transparent;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14.5px;cursor:pointer;color:var(--ink);
+  }
+  .tab-btn.active{background:var(--ink);color:var(--paper);}
+  .tab-panel{display:none;grid-template-columns:1fr 1fr;gap:50px;align-items:center;}
+  .tab-panel.active{display:grid;}
+  .tab-panel ul{list-style:none;padding:0;margin:22px 0 0;}
+  .tab-panel li{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15.5px;}
+  .tab-panel li:last-child{border-bottom:none;}
+  .check{color:var(--lime-dark);font-weight:700;}
+  .mock-panel{
+    background:var(--card);border:1.5px solid var(--ink);border-radius:18px;box-shadow:8px 8px 0 var(--ink);
+    padding:24px;
+  }
+  .mock-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .mock-row h4{font-family:'Space Grotesk',sans-serif;font-size:15px;margin:0;}
+  .mock-badge{font-size:11px;font-weight:700;background:var(--lime);padding:4px 10px;border-radius:999px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .bar-label{font-size:12.5px;width:92px;color:var(--ink-soft);}
+  .bar-track{flex:1;height:10px;background:var(--paper-2);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;background:var(--blue);}
+
+  /* COMPARISON */
+  .compare-wrap{overflow-x:auto;background:var(--card);border-radius:var(--radius);border:1px solid var(--line);}
+  table.compare{width:100%;border-collapse:collapse;min-width:640px;}
+  table.compare th, table.compare td{padding:16px 18px;text-align:center;font-size:14.5px;border-bottom:1px solid var(--line);}
+  table.compare th{font-family:'Space Grotesk',sans-serif;font-weight:600;background:var(--paper-2);}
+  table.compare td:first-child, table.compare th:first-child{text-align:left;font-weight:600;}
+  table.compare th.ours{background:var(--ink);color:var(--paper);}
+  table.compare td.ours-col{background:rgba(215,234,76,0.18);font-weight:600;}
+  .yes{color:var(--lime-dark);font-weight:700;}
+  .no{color:#C1493F;}
+  .partial{color:#B98A2E;}
+
+  /* ROADMAP */
+  .roadmap-list{display:flex;flex-direction:column;gap:0;}
+  .road-item{display:grid;grid-template-columns:70px 1fr;gap:20px;padding:26px 0;border-top:1px solid var(--line);}
+  .road-item:last-child{border-bottom:1px solid var(--line);}
+  .road-num{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--ink-soft);}
+  .road-item h3{font-size:19px;margin-bottom:6px;}
+  .road-item p{color:var(--ink-soft);font-size:15px;margin:0;}
+
+  /* TEAM / CTA */
+  .cta-section{
+    background:var(--ink);border-radius:28px;margin:0 32px;padding:70px 50px;text-align:center;color:var(--paper);
+    position:relative;overflow:hidden;
+  }
+  .cta-section h2{color:var(--paper);font-size:36px;margin-bottom:14px;}
+  .cta-section p{color:#B9C0DE;font-size:16px;margin-bottom:32px;}
+  .cta-section .btn-primary{background:var(--lime);color:var(--ink);border-color:var(--lime);}
+  .cta-section .btn-ghost{color:var(--paper);border-color:rgba(255,255,255,0.4);}
+
+  footer{padding:50px 0 30px;}
+  .foot-grid{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:30px;border-top:1px solid var(--line);padding-top:36px;}
+  .foot-team{font-size:13.5px;color:var(--ink-soft);line-height:1.9;}
+  .foot-team b{color:var(--ink);}
+
+  @media (max-width:980px){
+    .hero-grid{grid-template-columns:1fr;}
+    .problem-grid{grid-template-columns:1fr;}
+    .features-grid{grid-template-columns:1fr 1fr;}
+    .tab-panel{grid-template-columns:1fr;}
+    h1.headline{font-size:42px;}
+    .card-stage{height:320px;}
+  }
+  @media (max-width:680px){
+    .nav-links{display:none;}
+    .menu-toggle{display:block;}
+    .features-grid{grid-template-columns:1fr;}
+    .cta-section{margin:0 16px;padding:50px 24px;}
+    .wrap{padding:0 20px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="logo">
+      <div class="logo-mark"><span></span></div>
+      SmartStudy AI
+    </div>
+    <div class="nav-links">
+      <a href="#problem">Why it exists</a>
+      <a href="#features">Features</a>
+      <a href="#audience">For you</a>
+      <a href="#compare">Comparison</a>
+      <a href="#roadmap">Roadmap</a>
+    </div>
+    <div class="nav-cta">
+      <a href="#cta" class="btn btn-primary" style="padding:11px 20px;font-size:14px;">Try the demo</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="audience-pill" id="audiencePill">
+        <button class="active" data-mode="student">I'm a student</button>
+        <button data-mode="parent">I'm a parent</button>
+      </div>
+      <div class="eyebrow">AI-powered study companion</div>
+      <h1 class="headline">Turn any notes into <span class="hl-mark">smarter study<svg viewBox="0 0 300 26" preserveAspectRatio="none"><path d="M2 18 C 80 4, 220 4, 298 16" stroke="#D7EA4C" stroke-width="16" fill="none" stroke-linecap="round"/></svg></span> habits.</h1>
+      <p class="sub" id="heroSub">Upload a PDF or a page of notes and SmartStudy AI builds flashcards, quizzes, summaries and concept maps around it — then tells you exactly where you're weak.</p>
+      <div class="hero-ctas">
+        <a href="#cta" class="btn btn-primary">Get started free</a>
+        <a href="#features" class="btn btn-ghost">See how it works</a>
+      </div>
+      <div class="hero-stats">
+        <div><b>90%+</b><span>Quiz generation accuracy</span></div>
+        <div><b>6</b><span>AI-driven study tools</span></div>
+        <div><b>3+</b><span>Screen sizes tested</span></div>
+      </div>
+    </div>
+
+    <div class="card-stage">
+      <div class="badge-float b2"><span class="dot" style="background:var(--blue);"></span>NLP summary ready</div>
+      <div class="flashcard card-2"><div class="flashcard-inner"><div class="face face-front"><span class="tag">Biology</span><span class="q">Mitochondria</span></div></div></div>
+      <div class="flashcard card-1" id="demoCard">
+        <div class="flashcard-inner">
+          <div class="face face-front">
+            <span class="tag">Flashcard · tap to flip</span>
+            <span class="q">What does NLP stand for in SmartStudy AI's engine?</span>
+            <span class="hint">Chapter 2 · Study set: AI Fundamentals</span>
+          </div>
+          <div class="face face-back">
+            <span class="tag">Answer</span>
+            <span class="q">Natural Language Processing</span>
+            <span class="hint">Used to summarize notes and generate quiz questions.</span>
+          </div>
+        </div>
+      </div>
+      <div class="badge-float b1"><span class="dot" style="background:var(--pink);"></span>Weak topic flagged</div>
+    </div>
+  </div>
+</section>
+
+<section class="problem-section" id="problem">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">The problem</div>
+      <h2>Studying hard isn't the same as studying well.</h2>
+      <p>Most students revise everything equally — even the parts they already know — because there's no easy way to see what's actually weak.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card"><div class="num">01</div><p>Passive, inefficient study habits lead to poor retention, even after hours of reading.</p></div>
+      <div class="problem-card"><div class="num">02</div><p>One-size-fits-all study tools ignore each student's pace and learning style.</p></div>
+      <div class="problem-card"><div class="num">03</div><p>Without instant feedback, self-assessment before an exam is little more than guesswork.</p></div>
+      <div class="problem-card"><div class="num">04</div><p>Exam prep is time-consuming, and finding your own weak areas is genuinely hard to do alone.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="solution">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">How it works</div>
+      <h2>From raw notes to a personalized study plan.</h2>
+      <p>SmartStudy AI is a web-based study companion that uses NLP and machine learning to turn any document into tools built around how you actually learn.</p>
+    </div>
+    <div class="flow">
+      <div class="flow-step"><div class="ic">📄</div><h4>Upload notes</h4><p>Drop in a PDF, slide deck, or typed notes.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="ic">🧠</div><h4>AI reads it</h4><p>NLP pipeline extracts key concepts and structure.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="ic">🃏</div><h4>Tools generated</h4><p>Flashcards, quizzes, summaries, concept maps.</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="ic">📊</div><h4>You study smarter</h4><p>Weak topics prioritized, progress tracked.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">What's inside</div>
+      <h2>Six tools, one study session.</h2>
+      <p>Everything a student needs to go from raw material to exam-ready, and everything a parent needs to see it happening.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon" style="background:#EAF3DE;">📄</div><h3>Auto summarization</h3><p>Upload PDFs or notes and get instant, concise summaries powered by NLP.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#FBEAF0;">🃏</div><h3>Smart flashcards</h3><p>AI-generated flashcards with spaced-repetition scheduling built in.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#E6F1FB;">📝</div><h3>Quiz generator</h3><p>Auto-creates MCQs, fill-in-the-blank, and short-answer quizzes.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#FAEEDA;">📊</div><h3>Performance dashboard</h3><p>Tracks scores, weak areas, and study streaks visually over time.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#EEEDFE;">🗺️</div><h3>Concept mapping</h3><p>Visual mind maps that link related topics from your material.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#E1F5EE;">🤖</div><h3>AI tutor chat</h3><p>Ask questions about your uploaded material and get answers in real time.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="audience-section" id="audience">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Built for the whole household</div>
+      <h2>One platform, two very different views.</h2>
+      <p>Students get tools that make studying faster. Parents get visibility, without needing to look over anyone's shoulder.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="students">For students</button>
+      <button class="tab-btn" data-tab="parents">For parents</button>
+      <button class="tab-btn" data-tab="teachers">For educators</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-students">
+      <div>
+        <h3 style="font-size:26px;">Study time that actually moves the needle.</h3>
+        <ul>
+          <li><span class="check">✓</span> Turn any chapter into flashcards and quizzes in seconds.</li>
+          <li><span class="check">✓</span> See exactly which topics need another pass, and which don't.</li>
+          <li><span class="check">✓</span> Ask the AI tutor questions about your own material, any time.</li>
+          <li><span class="check">✓</span> Keep a study streak going with spaced repetition reminders.</li>
+        </ul>
+      </div>
+      <div class="mock-panel">
+        <div class="mock-row"><h4>This week's focus</h4><span class="mock-badge">4 sets due</span></div>
+        <div class="bar-row"><span class="bar-label">Cell Biology</span><div class="bar-track"><div class="bar-fill" style="width:82%;"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Thermodynamics</span><div class="bar-track"><div class="bar-fill" style="width:54%;background:var(--pink);"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Data Structures</span><div class="bar-track"><div class="bar-fill" style="width:91%;"></div></div></div>
+        <div class="bar-row"><span class="bar-label">World History</span><div class="bar-track"><div class="bar-fill" style="width:38%;background:var(--pink);"></div></div></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-parents">
+      <div>
+        <h3 style="font-size:26px;">Visibility, without the nagging.</h3>
+        <ul>
+          <li><span class="check">✓</span> A weekly summary of study time, streaks, and quiz scores.</li>
+          <li><span class="check">✓</span> Clear flags on subjects that need more attention.</li>
+          <li><span class="check">✓</span> No access to private chats — just progress, not surveillance.</li>
+          <li><span class="check">✓</span> Free for students, so there's nothing to budget for.</li>
+        </ul>
+      </div>
+      <div class="mock-panel">
+        <div class="mock-row"><h4>Weekly report · Aanya</h4><span class="mock-badge">On track</span></div>
+        <div class="bar-row"><span class="bar-label">Study time</span><div class="bar-track"><div class="bar-fill" style="width:70%;"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Quiz average</span><div class="bar-track"><div class="bar-fill" style="width:88%;"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Streak</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--pink);"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Weak topic</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--pink);"></div></div></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-teachers">
+      <div>
+        <h3 style="font-size:26px;">Class-wide insight, with zero grading load.</h3>
+        <ul>
+          <li><span class="check">✓</span> Assign a document and let the AI generate practice for the class.</li>
+          <li><span class="check">✓</span> See which concepts the whole class is struggling with.</li>
+          <li><span class="check">✓</span> Save hours of manual quiz-writing every week.</li>
+          <li><span class="check">✓</span> Roadmap includes direct LMS integration with Moodle and Classroom.</li>
+        </ul>
+      </div>
+      <div class="mock-panel">
+        <div class="mock-row"><h4>Class 10-B · Physics</h4><span class="mock-badge">32 students</span></div>
+        <div class="bar-row"><span class="bar-label">Newton's Laws</span><div class="bar-track"><div class="bar-fill" style="width:85%;"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Optics</span><div class="bar-track"><div class="bar-fill" style="width:47%;background:var(--pink);"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Thermodynamics</span><div class="bar-track"><div class="bar-fill" style="width:63%;"></div></div></div>
+        <div class="bar-row"><span class="bar-label">Waves</span><div class="bar-track"><div class="bar-fill" style="width:72%;"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Competitor analysis</div>
+      <h2>Where SmartStudy AI stands out.</h2>
+      <p>We looked at the tools students already use, and built the parts that were missing.</p>
+    </div>
+    <div class="compare-wrap">
+      <table class="compare">
+        <thead>
+          <tr><th>Feature</th><th>Quizlet</th><th>Anki</th><th>Notion AI</th><th class="ours">SmartStudy AI</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Auto flashcards</td><td class="yes">✓</td><td class="no">✕</td><td class="partial">Partial</td><td class="ours-col yes">✓</td></tr>
+          <tr><td>Quiz generation</td><td class="partial">Partial</td><td class="no">✕</td><td class="no">✕</td><td class="ours-col yes">✓</td></tr>
+          <tr><td>AI tutor chat</td><td class="no">✕</td><td class="no">✕</td><td class="no">✕</td><td class="ours-col yes">✓</td></tr>
+          <tr><td>Spaced repetition</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✕</td><td class="ours-col yes">✓</td></tr>
+          <tr><td>Doc upload &amp; NLP</td><td class="no">✕</td><td class="no">✕</td><td class="partial">Partial</td><td class="ours-col yes">✓</td></tr>
+          <tr><td>Free for students</td><td class="partial">Partial</td><td class="yes">✓</td><td class="no">✕</td><td class="ours-col yes">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">What's next</div>
+      <h2>The roadmap from here.</h2>
+      <p>This is the order we're planning to build in, starting with what students have asked for most.</p>
+    </div>
+    <div class="roadmap-list">
+      <div class="road-item"><div class="road-num">01</div><div><h3>📱 Mobile app</h3><p>Native iOS and Android apps with an offline study mode.</p></div></div>
+      <div class="road-item"><div class="road-num">02</div><div><h3>🌐 Multi-language support</h3><p>Coverage for 10+ languages and regional curricula.</p></div></div>
+      <div class="road-item"><div class="road-num">03</div><div><h3>🏫 Classroom mode</h3><p>Teachers assign content and track class-wide analytics.</p></div></div>
+      <div class="road-item"><div class="road-num">04</div><div><h3>🧠 Adaptive AI engine</h3><p>A deep learning model trained on millions of study sessions.</p></div></div>
+      <div class="road-item"><div class="road-num">05</div><div><h3>🔗 LMS integration</h3><p>Plug into Moodle, Canvas, and Google Classroom via API.</p></div></div>
+      <div class="road-item"><div class="road-num">06</div><div><h3>🎮 Gamification</h3><p>XP points, leaderboards, and study challenge mode.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="cta">
+  <div class="cta-section">
+    <h2>Study smarter starts with one upload.</h2>
+    <p>Free for students. Built for parents and teachers to see the progress, not police it.</p>
+    <div class="hero-ctas" style="justify-content:center;">
+      <a href="#" class="btn btn-primary">Get started free</a>
+      <a href="#" class="btn btn-ghost">Book a class demo</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div class="logo">
+      <div class="logo-mark"><span></span></div>
+      SmartStudy AI
+    </div>
+    <div class="foot-team">
+      <b>Group leader:</b> Kartikay Hiraskar<br>
+      <b>Group members:</b> Swarnim Kumbhar · Sanchita Khade · Sakshi Mangure<br>
+      <b>Course:</b> AIML · June 2026
+    </div>
+  </div>
+</footer>
+
+<script>
+  // audience pill toggle -> updates hero subtext
+  const pillBtns = document.querySelectorAll('#audiencePill button');
+  const heroSub = document.getElementById('heroSub');
+  const copy = {
+    student: "Upload a PDF or a page of notes and SmartStudy AI builds flashcards, quizzes, summaries and concept maps around it — then tells you exactly where you're weak.",
+    parent: "See how your child is studying without reading their notes for them: weekly progress reports, weak-topic flags, and study streaks, all in one dashboard."
+  };
+  pillBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      pillBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      heroSub.textContent = copy[btn.dataset.mode];
+    });
+  });
+
+  // flashcard flip
+  document.getElementById('demoCard').addEventListener('click', function(){
+    this.classList.toggle('flipped');
+  });
+
+  // audience tabs
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabPanels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // scroll reveal
+  const revealTargets = document.querySelectorAll('.feature-card, .problem-card, .road-item');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.style.opacity = 1;
+        e.target.style.transform = 'translateY(0)';
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:0.15});
+  revealTargets.forEach(el => {
+    el.style.opacity = 0;
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    io.observe(el);
+  });
+</script>
+
+</body>
+</html>
